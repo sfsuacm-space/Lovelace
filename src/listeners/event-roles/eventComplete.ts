@@ -5,13 +5,13 @@
  */
 
 import { Listener, container } from '@sapphire/framework';
-import { GuildScheduledEvent } from 'discord.js';
+import { Events, GuildScheduledEvent } from 'discord.js';
 import { yellow, cyan } from 'colorette';
 
 /**
  * Listener that handles the completion of Discord scheduled events.
  * Performs cleanup tasks including:
- * - Clearing the enrollment queue
+ * - Clearing the custom role assignment queue
  * - Deleting the associated role
  * - Removing the database entry
  */
@@ -27,7 +27,7 @@ export class OnEventComplete extends Listener {
 	) {
 		super(context, {
 			...options,
-			event: 'guildScheduledEventUpdate',
+			event: Events.GuildScheduledEventUpdate,
 		});
 	}
 
@@ -43,7 +43,7 @@ export class OnEventComplete extends Listener {
 	) {
 		if (!newScheduledEvent.isCompleted()) return;
 
-		const { client, database, enrollmentQueue } = container;
+		const { client, database, customRoleQueue } = container;
 
 		try {
 			if (!newScheduledEvent.guild) {
@@ -53,7 +53,7 @@ export class OnEventComplete extends Listener {
 				);
 			}
 
-			enrollmentQueue.clearEventQueue(newScheduledEvent);
+			customRoleQueue.clearEventQueue(newScheduledEvent);
 			const dbEvent = await database.findScheduledEvent(newScheduledEvent.id);
 			if (!dbEvent) {
 				client.logger.error(
